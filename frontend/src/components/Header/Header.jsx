@@ -6,83 +6,104 @@ import AddBoxOutlinedIcon from "@mui/icons-material/AddBoxOutlined";
 import { Avatar, Box } from "@mui/material";
 import ClickAwayListener from "@mui/material/ClickAwayListener";
 import { Link } from "react-router-dom";
-import Logo from "../logo/Logo.jsx";
-import { AuthContext } from "../../context/AuthContext";
+import Logo from '../logo/Logo.jsx'
+import axios from "axios";
 import "./header.scss";
+import { AuthContext } from "../../context/AuthContext";
+ const Header = ({ handleOpen }) => {
+  const [users, setUsers] = useState("");
+  const [search, setSearch] = useState("");
+  const [userFilter, setUserFilter] = useState("");
+  const { user:currentUser } = useContext(AuthContext);
 
-const Header = ({ handleOpen }) => {
-  const { user } = useContext(AuthContext);
-  console.log(user.profilePicture);
+  const [open, setOpen] = useState(false);
+
+  const handleClick = () => {
+    setOpen((prev) => !prev);
+  };
+
+  const handleClickAway = () => {
+    setOpen(false);
+  };
 
   const PF = process.env.REACT_APP_PUBLIC_FOLDER;
+
+  useEffect(() => {
+    const getUsersList = async () => {
+      const res = await axios.get("/users/");
+      console.log(res.data);
+      setUsers(res.data);
+    };
+    getUsersList();
+  }, []);
+
+  const handleSearch = (e) => {
+    setSearch(e.target.value);
+    setUserFilter(
+      users.filter((user) => user.userName.includes(e.target.value))
+    );
+  };
+  console.log("userFilter",userFilter);
+  
 
   return (
     <div className="header-wrapper">
       <div className="container">
         <div className="header">
           <Logo />
-          <Box sx={{ position: "relative" }}>
-            <div className="search">
-              <SearchIcon className="search-icon" />
-              <input type="text" placeholder="Search" />
-
-              <div className="search-result-wrapper">
-                <div className="search-result">
-                  <Link to={"/profile/numan"} className="search-result-link">
-                    <Avatar
-                      src={user.profilePicture && PF + user.profilePicture}
-                      sx={{ width: 28, height: 28 }}
-                    />
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        lineHeight: "1",
-                        fontSize: "12px",
-                      }}
-                    >
-                      <b>{user.username}</b>
-                      <span>{user.fullName}</span>
+          <ClickAwayListener onClickAway={handleClickAway}>
+            <Box sx={{ position: "relative" }}>
+              <div className="search">
+                <SearchIcon className="search-icon" />
+                <input
+                  type="text"
+                  placeholder="Search"
+                  onChange={handleSearch}
+                  onClick={handleClick}
+                />
+                {open ? (
+                  <div className="search-result-wrapper">
+                    <div className="search-result">
+                      {userFilter.length>0 ? (
+                        userFilter.slice(0, 3).map((user) => (
+                          <Link
+                            to={"/profile/" + user.userName}
+                            className="search-result-link"
+                            key={user._id}
+                            onClick={() => setOpen(false)}
+                          >
+                            <Avatar
+                              src={
+                                user.profilePicture && PF + user.profilePicture
+                              }
+                              sx={{ width: 28, height: 28 }}
+                            />
+                            <div
+                              style={{
+                                display: "flex",
+                                flexDirection: "column",
+                                lineHeight: "1",
+                                fontSize: "12px",
+                              }}
+                            >
+                              <b>{user.username}</b>
+                              <span>{user.fullName}</span>
+                            </div>
+                          </Link>
+                        ))
+                      ) : (
+                        <div className="search-resul-text">
+                          {search.length > 0
+                            ? "Der gesuchte Benutzer wurde nicht gefunden."
+                            : "Benutzersuche"}
+                        </div>
+                      )}
                     </div>
-                  </Link>
-                  <Link to={"/profile/osman"} className="search-result-link">
-                    <Avatar
-                      src={user.profilePicture && PF + user.profilePicture}
-                      sx={{ width: 28, height: 28 }}
-                    />
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        lineHeight: "1",
-                        fontSize: "12px",
-                      }}
-                    >
-                      <b>{user.username}</b>
-                      <span>{user.fullName}</span>
-                    </div>
-                  </Link>
-                  <Link to={"/profile/osman"} className="search-result-link">
-                    <Avatar
-                      src={user.profilePicture && PF + user.profilePicture}
-                      sx={{ width: 28, height: 28 }}
-                    />
-                    <div
-                      style={{
-                        display: "flex",
-                        flexDirection: "column",
-                        lineHeight: "1",
-                        fontSize: "12px",
-                      }}
-                    >
-                      <b>{user.username}</b>
-                      <span>{user.fullName}</span>
-                    </div>
-                  </Link>
-                </div>
+                  </div>
+                ) : null}
               </div>
-            </div>
-          </Box>
+            </Box>
+          </ClickAwayListener>
           <div className="header-links">
             <Link to="/">
               <HomeOutlinedIcon className="icon" />
@@ -91,14 +112,14 @@ const Header = ({ handleOpen }) => {
               <ChatOutlinedIcon className="icon" />
             </Link>
             <AddBoxOutlinedIcon
-              className="icon"
+              className="icon" 
               style={{ cursor: "pointer" }}
               onClick={handleOpen}
             />
-            <Link to="/profile/osman">
+            <Link to={"/profile/" + currentUser.username}>
               <Avatar
                 alt="Remy Sharp"
-                src={user.profilePicture && PF + user.profilePicture}
+                src={currentUser.profilePicture && PF + currentUser.profilePicture}
                 sx={{ width: 28, height: 28 }}
               />
             </Link>
@@ -108,5 +129,4 @@ const Header = ({ handleOpen }) => {
     </div>
   );
 };
-
 export default Header;
